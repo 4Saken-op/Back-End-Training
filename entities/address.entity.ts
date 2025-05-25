@@ -14,6 +14,11 @@ class Address extends AbstractEntity {
     @OneToOne(() => Employee, (employee) => employee.address)
     employee: Employee;
 
+    @Column()
+    houseNo: string
+    
+    @Column()
+    line2: string
   }
   
   export default Address;

@@ -18,8 +18,14 @@ class EmployeeRepository {
     }
 
     async findOneById(id: number): Promise<Employee> {
-        return this.repository.findOneBy({id});
-    }
+    return this.repository.findOne({
+        where: { id },
+        relations: {
+            address: true,
+            dept: true
+        }
+    });
+}
 
     async findOneByEmail(email: string): Promise<Employee> {
         return this.repository.findOneBy({email});

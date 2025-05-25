@@ -56,7 +56,11 @@ class EmployeeController {
                 newAddress,
                 createEmployeeDto.password,
                 createEmployeeDto.role,
-                createEmployeeDto.deptID
+                createEmployeeDto.deptID,
+                createEmployeeDto.employeeID,
+                req.body.dateOfJoining,
+                req.body.experience,
+                req.body.status
             );
             res.status(201).send(savedEmployee);
         } catch (error) {
@@ -91,13 +95,20 @@ class EmployeeController {
                 req.body.name,
                 req.body.age,
                 req.body.password,
-                req.body.address
+                req.body.address,
+                req.body.deptID,
+                req.body.role,
+                req.body.employeeID,
+                req.body.dateOfJoining,
+                req.body.experience,
+                req.body.status
             )
         );
     }
 
     patchEmployee = async (req: Request, res: Response) => {
-        let name = null, email = null, age = null, password = null;
+        let name = null, email = null, age = null, password = null, role = null, deptID = null;
+        let employeeID = null, dateOfJoining = null, experience = null, status = null;
         let address = new Address();
         if (req.body.name != undefined) name = req.body.name;
         if (req.body.age != undefined) age = req.body.age;
@@ -108,11 +119,17 @@ class EmployeeController {
         } else {
             address = null;
         }
+        if (req.body.role != undefined) role = req.body.role;
+        if (req.body.deptID != undefined) deptID = req.body.deptID;
+        if (req.body.employeeID != undefined) employeeID = req.body.employeeID;
+        if (req.body.dateOfJoining != undefined) dateOfJoining = req.body.dateOfJoining;
+        if (req.body.experience != undefined) experience = req.body.experience;
         
         res.status(200).send(
             await this.employeeService.patchEmployee(
                 Number(req.params.id),
-                email, name, age, password, address
+                email, name, age, password, address, deptID, role,
+                employeeID, dateOfJoining, experience, status
             )
         );
     }

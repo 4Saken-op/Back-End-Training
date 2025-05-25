@@ -1,20 +1,24 @@
 import EmployeeRepository from "../repositories/employee.repository";
-import Employee, { EmployeeRole } from "../entities/employee.entity";
+import Employee, { EmployeeRole, Status } from "../entities/employee.entity";
 import Address from "../entities/address.entity";
 import bcrypt from "bcrypt";
 import HttpException from "../exceptions/httpException";
 import { LoggerService } from "./logger.service";
 import Dept from "../entities/dept.entity";
 import { deptService } from "../routes/dept.route";
+import { employeeService } from "../routes/employee.route";
 
 class EmployeeService {
     private logger = LoggerService.getInstance(EmployeeService.name);
     constructor (private employeeRepository: EmployeeRepository) {}
 
-    async createEmployee(email:string, name:string, age:number, address: Address, password: string, role: EmployeeRole, dept: number): Promise<Employee> {
+    async createEmployee(email:string, name:string, age:number, address: Address, password: string, role: EmployeeRole, dept: number,
+        employeeID: string, dateOfJoining: number, experience: number, status: Status): Promise<Employee> {
         
         let deptObj = await deptService.getDeptById(dept);
         if (!deptObj) throw new HttpException(404, "Department not present");
+
+        let date = new Date(dateOfJoining);
         
         const newEmployee = new Employee();
         newEmployee.name = name;
@@ -24,6 +28,11 @@ class EmployeeService {
         newEmployee.password = await bcrypt.hash(password, 10);
         newEmployee.role = role;
         newEmployee.dept = deptObj;
+        newEmployee.employeeID = employeeID,
+        newEmployee.dateOfJoining = date,
+        newEmployee.experience = experience,
+        newEmployee.status = status
+
         return this.employeeRepository.create(newEmployee);
     }
 
@@ -43,8 +52,15 @@ class EmployeeService {
         return this.employeeRepository.findOneByEmail(email);
     }
 
-    async updateEmployee(id: number, email: string, name:string, age:number, password: string, address: Address) {
+    async updateEmployee(id: number, email: string, name:string, age:number, password: string, address: Address, deptID: number, role: EmployeeRole,
+        employeeID: string, dateOfJoining: Date, experience: number, status: Status) {
+
         const existingEmployee = this.employeeRepository.findOneById(id);
+        const existingDepartment = await deptService.getDeptById(deptID);
+
+        if (!existingDepartment) {
+            throw new HttpException(404, "Department doesnt exsit");
+        }
 
         if (existingEmployee) {
             const employee = new Employee();
@@ -53,14 +69,27 @@ class EmployeeService {
             employee.password = await bcrypt.hash(password, 10);
             employee.age = age;
             employee.address = address;
+            employee.dept = existingDepartment,
+            employee.role = role,
+            employee.dateOfJoining = dateOfJoining,
+            employee.employeeID = employeeID,
+            employee.experience = experience,
+            employee.status = status
             await this.employeeRepository.update(id, employee);
         } else {
             throw new HttpException(404, "Employee Not Found");
         }
     }
 
-    async patchEmployee(id: number, email: string, name:string, age:number, password: string, address: Address) {
+    async patchEmployee(id: number, email: string, name:string, age:number, password: string, address: Address, deptID: number, role: EmployeeRole,
+        employeeID: string, dateOfJoining: Date, experience: number, status: Status) {
         const existingEmployee = await this.employeeRepository.findOneById(id);
+
+        const existingDepartment = await deptService.getDeptById(deptID);
+
+        if (!existingDepartment) {
+            throw new HttpException(404, "Department doesnt exsit");
+        }
 
         if (existingEmployee) {
             const employee = new Employee();
@@ -69,6 +98,13 @@ class EmployeeService {
             if (password) existingEmployee.password = await bcrypt.hash(password, 10);
             if (age) existingEmployee.age = age;
             if (address) existingEmployee.address = address;
+            if (role) existingEmployee.role = role;
+            if (existingDepartment) existingEmployee.dept = existingDepartment;
+            if (employeeID) existingEmployee.employeeID = employeeID;
+            if (dateOfJoining) existingEmployee.dateOfJoining = dateOfJoining;
+            if (experience) existingEmployee.experience = experience;
+            if (status) existingEmployee.status = status;
+
             await this.employeeRepository.update(id, existingEmployee);
         } else {
             throw new HttpException(404, "Employee Not Found");
