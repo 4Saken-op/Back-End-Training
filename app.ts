@@ -15,7 +15,7 @@ server.use(express.json());
 server.use(loggerMiddleware);
 const logger = LoggerService.getInstance('app()');
 
-server.use("/employee", employeeRouter); //authMiddleware
+server.use("/employee",employeeRouter); //authMiddleware
 server.use("/auth", authRouter);
 server.use("/dept", deptRouter);
 server.use(errorMiddleware);

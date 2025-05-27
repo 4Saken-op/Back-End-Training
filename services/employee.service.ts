@@ -6,7 +6,6 @@ import HttpException from "../exceptions/httpException";
 import { LoggerService } from "./logger.service";
 import Dept from "../entities/dept.entity";
 import { deptService } from "../routes/dept.route";
-import { employeeService } from "../routes/employee.route";
 
 class EmployeeService {
     private logger = LoggerService.getInstance(EmployeeService.name);
