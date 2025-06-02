@@ -1,4 +1,4 @@
-import {Request, Response, Router, NextFunction} from "express";
+import { Request, Response, Router, NextFunction } from "express";
 import EmployeeRepository from "../repositories/employee.repository";
 import EmployeeService from "../services/employee.service";
 import HttpException from "../exceptions/httpException";
@@ -10,133 +10,158 @@ import Address from "../entities/address.entity";
 import { roleMiddleware } from "../middlewares/roleMiddleware";
 import Dept from "../entities/dept.entity";
 
-
 class EmployeeController {
-    constructor(private employeeService: EmployeeService, router: Router) {
-        router.post("/", this.createEmployee.bind(this));
-        router.get("/", this.getAllEmployees.bind(this)); //rolemiddleware
-        router.get("/:id", this.getEmployeeById.bind(this));
-        router.put("/:id", this.updateEmployee);
-        router.patch("/:id", this.patchEmployee);
-        router.delete("/:id", this.deleteEmployee);
+  constructor(private employeeService: EmployeeService, router: Router) {
+    router.post("/", this.createEmployee.bind(this));
+    router.get("/", this.getAllEmployees.bind(this)); //rolemiddleware
+    router.get("/:id", this.getEmployeeById.bind(this));
+    router.put("/:id", this.updateEmployee);
+    router.patch("/:id", this.patchEmployee);
+    router.delete("/:id", this.deleteEmployee);
+  }
+
+  async createEmployee(req: Request, res: Response, next: NextFunction) {
+    // try {
+    // // const name = req.body.name;
+    // // const email = req.body.email;
+    // // const age = req.body.age;
+    // // const address = req.body.address;
+    // const { email, name, age, address } = req.body;
+    // if (!isEmail(email)) {
+    //     throw new HttpException(412, "not valid email")
+    // }
+
+    // const savedEmployee = await this.employeeService.createEmployee(email, name, age, address);
+    // res.status(201).send(savedEmployee);
+    // } catch (err) {
+    //     console.log(err);
+    //     next(err);
+    // }
+
+    try {
+      const createEmployeeDto = plainToInstance(CreateEmployeeDto, req.body);
+      const errors = await validate(createEmployeeDto);
+      if (errors.length > 0) {
+        console.log(JSON.stringify(errors));
+        throw new HttpException(400, JSON.stringify(errors));
+      }
+      let newAddress = new Address();
+      newAddress.line1 = createEmployeeDto.address.line1;
+      newAddress.pincode = createEmployeeDto.address.pincode;
+      newAddress.line2 = createEmployeeDto.address.pincode;
+      newAddress.houseNo = createEmployeeDto.address.pincode;
+      const savedEmployee = await this.employeeService.createEmployee(
+        createEmployeeDto.email,
+        createEmployeeDto.name,
+        createEmployeeDto.age,
+        newAddress,
+        createEmployeeDto.password,
+        createEmployeeDto.role,
+        createEmployeeDto.deptID,
+        createEmployeeDto.employeeID,
+        req.body.dateOfJoining,
+        req.body.experience,
+        req.body.status
+      );
+      res.status(201).send(savedEmployee);
+    } catch (error) {
+      next(error);
     }
+  }
 
-    async createEmployee(req: Request, res: Response, next: NextFunction) {
-        // try {
-        // // const name = req.body.name;
-        // // const email = req.body.email;
-        // // const age = req.body.age;
-        // // const address = req.body.address;
-        // const { email, name, age, address } = req.body;
-        // if (!isEmail(email)) {
-        //     throw new HttpException(412, "not valid email")
-        // }
+  async getAllEmployees(req: Request, res: Response) {
+    res.status(200).send(await this.employeeService.getAllEmployees());
+  }
 
-        // const savedEmployee = await this.employeeService.createEmployee(email, name, age, address);
-        // res.status(201).send(savedEmployee);
-        // } catch (err) {
-        //     console.log(err);
-        //     next(err);
-        // }
-
-        try {
-            const createEmployeeDto = plainToInstance(CreateEmployeeDto, req.body);
-            const errors = await validate(createEmployeeDto);
-            if (errors.length > 0) {
-                console.log(JSON.stringify(errors));
-                throw new HttpException(400, JSON.stringify(errors));
-            }
-            let newAddress = new Address();
-            newAddress.line1 = createEmployeeDto.address.line1;
-            newAddress.pincode = createEmployeeDto.address.pincode;
-            const savedEmployee = await this.employeeService.createEmployee(
-                createEmployeeDto.email,
-                createEmployeeDto.name,
-                createEmployeeDto.age,
-                newAddress,
-                createEmployeeDto.password,
-                createEmployeeDto.role,
-                createEmployeeDto.deptID,
-                createEmployeeDto.employeeID,
-                req.body.dateOfJoining,
-                req.body.experience,
-                req.body.status
-            );
-            res.status(201).send(savedEmployee);
-        } catch (error) {
-            next(error);
-        }
-
+  async getEmployeeById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const employee = await this.employeeService.getEmployeeById(
+        Number(req.params.id)
+      );
+      if (!employee) {
+        throw new HttpException(404, "Employee id dont exist");
+      }
+      res.status(200).send(employee);
+    } catch (err) {
+      console.log(err);
+      next(err);
     }
+  }
 
-    async getAllEmployees(req: Request, res: Response)  {
-        res.status(200).send(await this.employeeService.getAllEmployees());
+  updateEmployee = async (req: Request, res: Response) => {
+    res
+      .status(200)
+      .send(
+        await this.employeeService.updateEmployee(
+          Number(req.params.id),
+          req.body.email,
+          req.body.name,
+          req.body.age,
+          req.body.password,
+          req.body.address,
+          req.body.deptID,
+          req.body.role,
+          req.body.employeeID,
+          req.body.dateOfJoining,
+          req.body.experience,
+          req.body.status
+        )
+      );
+  };
+
+  patchEmployee = async (req: Request, res: Response) => {
+    let name = null,
+      email = null,
+      age = null,
+      password = null,
+      role = null,
+      deptID = null;
+    let employeeID = null,
+      dateOfJoining = null,
+      experience = null,
+      status = null;
+    let address = new Address();
+    if (req.body.name != undefined) name = req.body.name;
+    if (req.body.age != undefined) age = req.body.age;
+    if (req.body.email != undefined) email = req.body.email;
+    if (req.body.password != undefined) password = req.body.password;
+    if (req.body.address != undefined) {
+      address = req.body.address;
+    } else {
+      address = null;
     }
+    if (req.body.role != undefined) role = req.body.role;
+    if (req.body.deptID != undefined) deptID = req.body.deptID;
+    if (req.body.employeeID != undefined) employeeID = req.body.employeeID;
+    if (req.body.dateOfJoining != undefined)
+      dateOfJoining = req.body.dateOfJoining;
+    if (req.body.experience != undefined) experience = req.body.experience;
 
-    async getEmployeeById(req: Request, res: Response, next: NextFunction) {
+    res
+      .status(200)
+      .send(
+        await this.employeeService.patchEmployee(
+          Number(req.params.id),
+          email,
+          name,
+          age,
+          password,
+          address,
+          deptID,
+          role,
+          employeeID,
+          dateOfJoining,
+          experience,
+          status
+        )
+      );
+  };
 
-        try {
-            const employee = await this.employeeService.getEmployeeById(Number(req.params.id));
-            if (!employee) {
-                throw new HttpException(404,"Employee id dont exist");
-            }
-            res.status(200).send(employee);
-        } catch (err) {
-            console.log(err);
-            next(err);
-        }
-    }
-
-    updateEmployee = async (req: Request, res: Response) => {
-        res.status(200).send(
-            await this.employeeService.updateEmployee(
-                Number(req.params.id),
-                req.body.email,
-                req.body.name,
-                req.body.age,
-                req.body.password,
-                req.body.address,
-                req.body.deptID,
-                req.body.role,
-                req.body.employeeID,
-                req.body.dateOfJoining,
-                req.body.experience,
-                req.body.status
-            )
-        );
-    }
-
-    patchEmployee = async (req: Request, res: Response) => {
-        let name = null, email = null, age = null, password = null, role = null, deptID = null;
-        let employeeID = null, dateOfJoining = null, experience = null, status = null;
-        let address = new Address();
-        if (req.body.name != undefined) name = req.body.name;
-        if (req.body.age != undefined) age = req.body.age;
-        if (req.body.email != undefined) email = req.body.email;
-        if (req.body.password != undefined) password = req.body.password;
-        if (req.body.address != undefined) {
-            address = req.body.address;
-        } else {
-            address = null;
-        }
-        if (req.body.role != undefined) role = req.body.role;
-        if (req.body.deptID != undefined) deptID = req.body.deptID;
-        if (req.body.employeeID != undefined) employeeID = req.body.employeeID;
-        if (req.body.dateOfJoining != undefined) dateOfJoining = req.body.dateOfJoining;
-        if (req.body.experience != undefined) experience = req.body.experience;
-        
-        res.status(200).send(
-            await this.employeeService.patchEmployee(
-                Number(req.params.id),
-                email, name, age, password, address, deptID, role,
-                employeeID, dateOfJoining, experience, status
-            )
-        );
-    }
-
-    deleteEmployee = async (req: Request, res: Response) => {
-        res.status(200).send(await this.employeeService.removeEmployee(Number(req.params.id)));
-    }
+  deleteEmployee = async (req: Request, res: Response) => {
+    res
+      .status(200)
+      .send(await this.employeeService.removeEmployee(Number(req.params.id)));
+  };
 }
 
 export default EmployeeController;
