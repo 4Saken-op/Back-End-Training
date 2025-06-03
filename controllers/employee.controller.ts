@@ -48,8 +48,8 @@ class EmployeeController {
       let newAddress = new Address();
       newAddress.line1 = createEmployeeDto.address.line1;
       newAddress.pincode = createEmployeeDto.address.pincode;
-      newAddress.line2 = createEmployeeDto.address.pincode;
-      newAddress.houseNo = createEmployeeDto.address.pincode;
+      newAddress.line2 = createEmployeeDto.address.line2;
+      newAddress.houseNo = createEmployeeDto.address.houseNo;
       const savedEmployee = await this.employeeService.createEmployee(
         createEmployeeDto.email,
         createEmployeeDto.name,
